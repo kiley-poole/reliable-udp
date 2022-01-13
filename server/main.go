@@ -21,15 +21,19 @@ func main() {
 	err = syscall.Bind(socket, &address)
 	check(err)
 
-	packet := make([]byte, 1460)
 	for {
-		size, _, err := syscall.Recvfrom(socket, packet, 0)
-		if size == 0 {
-			break
-		}
-		fmt.Printf("%s\n", string(packet))
+		packet := make([]byte, 1460)
+		_, _, err = syscall.Recvfrom(socket, packet, 0)
+		fmt.Printf("Message: %s\n", string(packet))
 		check(err)
+
+		fmt.Println("Sending ACK")
+		test := "ACK"
+		err = syscall.Sendto(socket, []byte(test), 0, &syscall.SockaddrInet4{Port: 5050})
+		check(err)
+
 	}
+
 }
 
 func check(err error) {
