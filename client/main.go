@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"crypto/md5"
+	"encoding/binary"
 	"fmt"
 	"log"
 	"os"
@@ -22,8 +24,9 @@ func main() {
 	for {
 		fmt.Print("$ ")
 		if s.Scan() {
-			msg := s.Bytes()
+			data := s.Bytes()
 			for {
+				msg := buildMsg(data)
 				transmit(msg, socket, port)
 				exit := receiveValidation(socket)
 				if exit {
@@ -39,12 +42,25 @@ func socketBuild() int {
 	socket, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_DGRAM, 0)
 	check(err)
 
+	defer syscall.Close(socket)
+
 	err = syscall.Bind(socket, &syscall.SockaddrInet4{Port: 5050})
 	check(err)
 
 	return socket
 
 }
+
+func buildMsg(data []byte) []byte {
+	length := len(data)
+	lenbs := make([]byte, 2)
+	binary.BigEndian.PutUint16(lenbs, uint16(length))
+	checksum := md5.Sum(data)
+	lenCs := append(lenbs, checksum[:]...)
+	msg := append(lenCs, data...)
+	return msg
+}
+
 func transmit(msg []byte, socket int, port int) {
 	err := syscall.Sendto(socket, msg, 0, &syscall.SockaddrInet4{Port: port})
 	check(err)

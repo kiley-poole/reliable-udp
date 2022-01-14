@@ -4,8 +4,8 @@ import socket
 import sys
 
 
-DROP_RATE = 0.8
-CORRUPTION_RATE = 0
+DROP_RATE = 0.5
+CORRUPTION_RATE = 0.5
 
 
 if __name__ == '__main__':
