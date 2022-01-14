@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"crypto/md5"
-	"encoding/binary"
 	"fmt"
 	"log"
 	"os"
@@ -19,6 +18,7 @@ func main() {
 	check(err)
 
 	socket := socketBuild()
+	defer syscall.Close(socket)
 	fmt.Println("Reliable UDP")
 	fmt.Println("************")
 	for {
@@ -42,8 +42,6 @@ func socketBuild() int {
 	socket, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_DGRAM, 0)
 	check(err)
 
-	defer syscall.Close(socket)
-
 	err = syscall.Bind(socket, &syscall.SockaddrInet4{Port: 5050})
 	check(err)
 
@@ -52,12 +50,9 @@ func socketBuild() int {
 }
 
 func buildMsg(data []byte) []byte {
-	length := len(data)
-	lenbs := make([]byte, 2)
-	binary.BigEndian.PutUint16(lenbs, uint16(length))
+
 	checksum := md5.Sum(data)
-	lenCs := append(lenbs, checksum[:]...)
-	msg := append(lenCs, data...)
+	msg := append(checksum[:], data...)
 	return msg
 }
 

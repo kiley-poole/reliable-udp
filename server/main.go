@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/md5"
-	"encoding/binary"
 	"fmt"
 	"log"
 	"syscall"
@@ -25,14 +24,12 @@ func main() {
 
 	for {
 		packet := make([]byte, 1460)
-		_, _, err = syscall.Recvfrom(socket, packet, 0)
+		n, _, err := syscall.Recvfrom(socket, packet, 0)
 		check(err)
 
-		dataLength := packet[0:2]
-		len := binary.BigEndian.Uint16(dataLength) + 18
 		var checksumHeader [16]byte
-		copy(checksumHeader[:], packet[2:18])
-		data := packet[18:len]
+		copy(checksumHeader[:], packet[:16])
+		data := packet[16:n]
 		checksum := md5.Sum(data)
 
 		fmt.Printf("Checksum Header: %x\n", string(checksumHeader[:]))
